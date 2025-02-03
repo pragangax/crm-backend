@@ -30,7 +30,7 @@ const app = express();
 const corsOptions = {
   origin: [
     "http://localhost:3000",
-    "https://crm-frontend-silk-eight.vercel.app/",
+    "https://crm-frontend-silk-eight.vercel.app",
   ],
   // origin: "*",
   methods: ["POST", "GET", "PUT", "DELETE"],
