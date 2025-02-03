@@ -19,13 +19,9 @@ class RoleController {
     const totalCount = await RoleModel.countDocuments();
 
     // Fetch roles with pagination
-    const roles = await RoleModel.find();
-
-    console.log("req.user.role", req.user.role);
-
-    const filteredRoles = roles?.filter(
-      (role) => role.name != fixedRole.SUPER_ADMIN
-    );
+    const roles = await RoleModel.find({
+      name: { $nin: [fixedRole.SUPER_ADMIN] },
+    });
 
     if (!roles || roles.length === 0) {
       throw new ServerError("NotFound", "Roles not found");
@@ -44,7 +40,8 @@ class RoleController {
     const filteredEntities = entities?.filter(
       (entity) =>
         entity.entity != fixedRole.SUPER_ADMIN &&
-        entity.entity != fixedRole.ADMIN
+        entity.entity != fixedRole.ADMIN &&
+        entity.entity != "ROLE"
     );
 
     if (!filteredEntities || filteredEntities.length === 0) {

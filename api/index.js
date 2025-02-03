@@ -24,13 +24,15 @@ import systemRouter from "../routes/system/systemRouter.js";
 import targetRouter from "../routes/target/targetRouter.js";
 import leadRouter from "../routes/Lead/leadRouter.js";
 import interactionRouter from "../routes/Interaction/interactionRouter.js";
-// import "../config/to-alter-entities.js";
 
 const app = express();
 const corsOptions = {
   origin: [
+    "https://crm-frontend-sigma-green.vercel.app",
     "http://localhost:3000",
-    "https://crm-frontend-silk-eight.vercel.app",
+    "http://localhost:3001",
+    "https://rezilance-frontend.vercel.app",
+    "https://audit-note-client.vercel.app",
   ],
   // origin: "*",
   methods: ["POST", "GET", "PUT", "DELETE"],
