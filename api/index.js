@@ -28,11 +28,8 @@ import interactionRouter from "../routes/Interaction/interactionRouter.js";
 const app = express();
 const corsOptions = {
   origin: [
-    "https://crm-frontend-sigma-green.vercel.app",
     "http://localhost:3000",
-    "http://localhost:3001",
-    "https://rezilance-frontend.vercel.app",
-    "https://audit-note-client.vercel.app",
+    "https://crm-frontend-silk-eight.vercel.app"
   ],
   // origin: "*",
   methods: ["POST", "GET", "PUT", "DELETE"],
