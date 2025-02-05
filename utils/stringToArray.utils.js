@@ -4,7 +4,7 @@ import { ServerError } from "./customErrorHandler.utils.js"
 export const stringToArray = (css = "")=>{
     if(typeof css != 'string') throw new ServerError('Invalid input to stringToArray function');
     if(css == "") return [];
-    const arrayOfIds = css.split(',').map((item) => item.trim());
+    const arrayOfIds = css.split(',').filter((item)=>item!='').map((item) => item.trim());
     return arrayOfIds
 }
 
@@ -27,5 +27,6 @@ export const parseRefIds = ({ data, fields }) => {
             data[key] = stringToArray(data[key]);
         }
     });
+    console.log("string to array utils output : ", data)
     return data;
 };
