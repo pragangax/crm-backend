@@ -5,6 +5,7 @@ import sendEmail from "../../utils/sendEmail.js";
 import crypto from "crypto";
 import { type } from "os";
 import uploadAndGetAvatarUrl from "../../utils/uploadAndGetAvatarUrl.utils.js";
+import { parseRefIds } from "../../utils/stringToArray.utils.js";
 
 class AuthController {
   static homeFunction = (req, res) => {
@@ -31,7 +32,14 @@ class AuthController {
   };
 
   static signup = async (req, res, sendPassword = false) => {
-    console.log("user adding");
+    // Converting Multipart form data to json
+    let userData = JSON.parse(JSON.stringify(req.body));
+    // Parsing RefIds
+    userData = parseRefIds({
+      data: userData,
+      fields: ["solution", "territory", "industry"],
+    });
+
     const {
       firstName,
       lastName,
@@ -46,10 +54,10 @@ class AuthController {
       state = "N/A",
       country = "N/A",
       // for sales cham assignment purpose
-      territory,
-      solution,
-      industry,
-    } = req.body;
+      territory = [],
+      solution = [],
+      industry = [],
+    } = userData;
 
     if (password !== password_confirmation) {
       return res
@@ -106,13 +114,21 @@ class AuthController {
         otp,
         otpExpiresAt: Date.now() + 10 * 60 * 1000, // OTP valid for 10 minutes
       });
+      console.log(
+        "territory ,industry, solution",
+        territory,
+        industry,
+        solution
+      );
       if (req.file) {
+        console.log("new avatar url....");
         newUser.avatar = await uploadAndGetAvatarUrl(
           req.file,
           "user",
           newUser._id,
           "stream"
         );
+        console.log("new avatar url....", newUser.avatar);
       }
       const savedUser = await newUser.save();
       const populatedUser = await UserModel.findById(savedUser._id).populate({

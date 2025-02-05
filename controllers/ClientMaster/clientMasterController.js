@@ -21,9 +21,18 @@ import TenderMasterModel from "../../models/TenderMasterModel.js";
 import StageHistoryModel from "../../models/HistoryModels/StageHistoryModel.js";
 import SubStageHistoryModel from "../../models/HistoryModels/SubSageHistoryModel.js";
 import RevenueMasterModel from "../../models/RevenueMasterModel.js";
+import { parseRefIds } from "../../utils/stringToArray.utils.js";
 
 class ClientMasterController {
   static createClient = catchAsyncError(async (req, res) => {
+    // Converting Multipart form data to json
+    let updateData = JSON.parse(JSON.stringify(req.body));
+    // Parsing RefIds
+    updateData = parseRefIds({
+      data: updateData,
+      fields: ["relatedContacts"],
+    });
+
     let {
       name,
       entryDate,
@@ -48,7 +57,7 @@ class ClientMasterController {
       priority,
       detailsConfirmation,
       createdAt,
-    } = req.body;
+    } = updateData;
 
     // Validate required fields
     if (
@@ -201,8 +210,15 @@ class ClientMasterController {
 
   static updateClient = catchAsyncError(async (req, res, next, session) => {
     const { id } = req.params;
-    const updateData = req.body;
-    console.log("update client req : ", updateData);
+    // Converting Multipart form data to json
+    let updateData = JSON.parse(JSON.stringify(req.body));
+    // Parsing RefIds
+    updateData = parseRefIds({
+      data: updateData,
+      fields: ["relatedContacts"],
+    });
+    console.log("parsed updateData:", updateData);
+
     const client = await ClientMasterModel.findById(id).populate("territory");
 
     if (!client) throw new ServerError("NotFound", "Client");
@@ -213,11 +229,11 @@ class ClientMasterController {
     });
 
     // Parsing Related contacts
-    if (updateData.hasOwnProperty("relatedContacts") )
+    if (updateData?.hasOwnProperty("relatedContacts"))
       await handleContactsUpdate({
         newContacts: updateData.relatedContacts,
         oldContacts: client.relatedContacts,
-        clientId : client._id,
+        clientId: client._id,
         session,
       });
 

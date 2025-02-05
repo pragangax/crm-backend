@@ -12,6 +12,7 @@ const getFileExtension = (fileName)=>{
 }
 
 const uploadStreamToCloudinary = async (file, folderName, fileName, retries = 2) => {
+  console.log("uploading.........")
   const fileExtension = getFileExtension(file.originalname)
   return new Promise((resolve, reject) => {
     const uploadFunction = (retryCount) => {

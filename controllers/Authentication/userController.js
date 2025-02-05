@@ -3,6 +3,7 @@ import { ServerError } from "../../utils/customErrorHandler.utils.js";
 import uploadAndGetAvatarUrl from "../../utils/uploadAndGetAvatarUrl.utils.js";
 import UserModel from "../../models/UserModel.js";
 import AuthController from "./authController.js";
+import { parseRefIds } from "../../utils/stringToArray.utils.js";
 
 // const isSuperAdmin = (role) => role.name === fixedRole.SUPER_ADMIN;
 
@@ -116,6 +117,7 @@ class UserController {
   });
 
   static createUser = catchAsyncError(async (req, res, next) => {
+    
     const password = `AXRC${this.generateAlphabetPassword()}`;
     req.body.password = password;
     req.body.password_confirmation = password;
@@ -124,7 +126,13 @@ class UserController {
 
   static updateUser = catchAsyncError(async (req, res, next) => {
     const id = req.params.id;
-    const updateData = req.body;
+    let updateData = req.body;
+
+    // Converting Multipart form data to json
+    updateData = JSON.parse(JSON.stringify(req.body));
+
+    // Parsing RefIds
+    updateData = parseRefIds({data : updateData, fields : ['solution', 'territory', 'industry']})    
 
     const user = await UserModel.findById(id);
     if (!user) throw new ServerError("NotFound", "user");
@@ -138,9 +146,11 @@ class UserController {
         if (key == "city" || key == "country" || key == "state") {
           user["address"][key] = updateData[key];
         } else {
-          user[key] = updateData[key];
+          if(key != 'avatar')
+           user[key] = updateData[key];
         }
     });
+    console.log("file---", req.file)
     if (req.file) {
       user.avatar = await uploadAndGetAvatarUrl(
         req.file,

@@ -52,7 +52,7 @@ export const getOpportunityId = (clientName, clientTerritory) => {
   return generateCustomId(clientName, clientTerritory, "opportunity");
 };
 
-export const parseContacts =()=>{}
+export const parseContacts = () => {};
 // handle addition and deletion contact from client when we receive an array of contact ids
 export const handleContactsUpdate = async ({
   newContacts,
@@ -60,14 +60,18 @@ export const handleContactsUpdate = async ({
   clientId,
   session,
 }) => {
-  if (!newContacts) return; 
+  if (!newContacts) return;
+
+  oldContacts = oldContacts.map((cId) => cId.toString());
+  newContacts = newContacts.map((cId) => cId.toString());
+
   const removedContacts =
     oldContacts.filter((cId) => !newContacts.includes(cId)) || [];
   const newAddedContacts =
     newContacts.filter((cId) => !oldContacts.includes(cId)) || [];
-  
-    console.log("new added contacts ", newAddedContacts);
-    console.log("remove contacts ", removedContacts);
+
+  console.log("new added contacts ", newAddedContacts);
+  console.log("remove contacts ", removedContacts);
   // Step 1: Remove contacts that are no longer associated with the client
   if (removedContacts.length > 0) {
     await ContactMasterModel.updateMany(
@@ -96,7 +100,6 @@ export const handleContactsUpdate = async ({
     );
   }
 
-  
   // console.log("related contacts in parseContacts----", relatedContacts);
   // if (Array.isArray(relatedContacts) && relatedContacts.length > 0) {
   //   for (const contactId of relatedContacts) {
