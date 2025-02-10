@@ -48,6 +48,7 @@ class ContactMasterConfigController{
         res.status(200).json({
           status: "success",
           message: "Archetype deleted successfully",
+          data : archetype
         });
       });
     
@@ -121,6 +122,7 @@ class ContactMasterConfigController{
         res.status(200).json({
           status: "success",
           message: "Relationship Degree deleted successfully",
+          data:relationshipDegree
         });
       });
     

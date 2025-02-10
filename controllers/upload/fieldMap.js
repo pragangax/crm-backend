@@ -1,4 +1,4 @@
-export const clientFieldMapping = {
+export const clientFieldMap = {
     "Client Name": "name",
     "Client Code": "clientCode",
     "Entry Date": "entryDate",
@@ -27,20 +27,21 @@ export const clientFieldMapping = {
   export const contactFieldMap = {
     Gender: "gender",
     "Entry Date": "entryDate",
-    "Entered by": "enteredBy",
+    "Entered By": "enteredBy",
     "First Name": "firstName",
     "Last Name": "lastName",
-    "Client Name (drop down from Client Master)": "client", //remove this field
+    "Client Name": "client", //remove this field
     "Job Title": "jobTitle",
     Phone: "phone",
     "Work Email": "workEmail",
     "Mobile Phone": "mobilePhone",
     "Personal Email": "personalEmail",
     Archetype: "archeType",
-    "Relationship in degree": "relationshipDegree",
-    "City / Location": "city",
-    "Something memorable about him / her": "memorableDetail",
-    "Notes / Recent Interactions": "notes",
+    "Relationship Degree": "relationshipDegree",
+    "Location": "city",
+    "Memorable Aspect": "memorableDetail",
+    "Notes": "notes",
+    // "Notes / Recent Interactions": "notes",
   };
 
   export const opportunityFieldMap = {
@@ -104,4 +105,49 @@ export const clientFieldMapping = {
     "POTENTIAL OFFSETS" : "potentialOffset",
     "POTENTIAL REVENUE" : "potentialRevenue",
     "COMMENTS:" : "comment",
+  }
+
+  export const fieldMapping = {
+    client: clientFieldMap,
+    contact: contactFieldMap,
+    opportunity: opportunityFieldMap,
+    tender: tenderFieldMap,
+    businessDevelopment: bdFieldMap,
+  };
+
+  export const getFieldMapping = (resource) => {
+    const csvToModelFieldMap = fieldMapping[resource];
+    if (!csvToModelFieldMap) {
+      throw new ClientError("Formate Error", `Invalid resource type: ${resource}`);
+    }
+    return csvToModelFieldMap;
+  }
+  const validationRules = {
+    email: [
+      (value) => (value === "" ? null : (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "Invalid email format" : null)) // Ignore empty, validate others
+    ],
+    phone: [
+      (value) => (value === "" ? null : (!/^\d+$/.test(value) ? "Phone must contain only numbers" : null)), // Ignore empty, validate others
+      (value) => (value === "" ? null : (value.length < 7 || value.length > 15 ? "Phone number must be between 7 and 15 digits" : null)) // Ignore empty, validate others
+    ],
+    numericString: [
+      (value) => (!/^\d+$/.test(value) ? "Must be a numeric string" : null)  // Ensures only numbers
+    ],
+    alphabeticString: [
+      (value) => (!/^[a-zA-Z]+$/.test(value) ? "Must contain only alphabetic characters" : null)  // Ensures only letters
+    ],
+    gender: [
+      (value) => (!/^(M|F|O)$/.test(value) ? 'Gender must be "M", "F", or "O"' : null) // Only allows M, F, or O
+    ]
+  };
+  
+  
+  // Used at the time of generating analysis result of bulk data
+  export const validationRulesMap = {
+    //contact
+    gender : validationRules.gender,
+    phone :  validationRules.phone,
+    workEmail : validationRules.email,
+    personalEmail : validationRules.email,
+    mobilePhone :validationRules.phone,
   }

@@ -1,5 +1,9 @@
 import csv from "csvtojson";
-import { sendBulkUploadResponse } from "../../utils/upload.utils.js";
+import {
+  addMissingFields,
+  generateAnalysisReport,
+  sendBulkUploadResponse,
+} from "../../utils/upload.utils.js";
 import { catchAsyncError } from "../../middlewares/catchAsyncError.middleware.js";
 import { Readable } from "stream";
 import { parseRevenueData } from "../../utils/upload.utils.js";
@@ -7,7 +11,6 @@ import { generateRevenues } from "../../utils/opportunity.utils.js";
 import { getFormattedData } from "../../utils/upload.utils.js";
 
 class UploadController {
-  
   static uploadClientInBulk = catchAsyncError(async (req, res) => {
     let { check } = req.query;
     check = check === "true" ? true : false;
@@ -18,28 +21,52 @@ class UploadController {
       bulkData,
       `client`
     );
-    await sendBulkUploadResponse(res, check, bulkData, formattedData, analysisResult, 'client');
-  });
-  
-  static uploadContactInBulk = catchAsyncError(async (req, res) => {
-    // const csvFilePath = req.file.path;
-    let { check } = req.query;
-    check = check === "true" ? true : false;
-    const stream = Readable.from(req.file.buffer.toString());
-    const bulkData = await csv().fromStream(stream);
-    const { formattedData, analysisResult } = await getFormattedData(
+    await sendBulkUploadResponse(
+      res,
+      check,
       bulkData,
-      "contact"
+      formattedData,
+      analysisResult,
+      "client"
     );
-    console.log("analysis result ---", analysisResult);
-    console.log("formatted data ---", formattedData);
-    await sendBulkUploadResponse(res, check, bulkData, formattedData, analysisResult, 'contact');
+  });
 
+  static uploadContactInBulk = catchAsyncError(async (req, res) => {
+    const { check, bulkData } = req;
+    console.log("bulk-upload-raw-data :", bulkData);
+    
+    //converts raw data from the csv to db compatible formate
+    const formattedData = await getFormattedData({
+      bulkData,
+      resource: "contact",
+    });
+    console.log("bulk-upload-formatted-data", formattedData);
+    
+    //Adds enteredBy and entryDate
+    addMissingFields(req.user, formattedData);
+    console.log("bulk-upload-missing-fields-added", formattedData);
+    
+    //Creates map of positions to be marked as mistake in correction file 
+    const analysisReport = generateAnalysisReport({
+      formattedData,
+      bulkData,
+      resource: "contact",
+    });
+    console.log("bulk-upload-analysis-result", analysisReport);
+
+    await sendBulkUploadResponse({
+      res,
+      check,
+      bulkData,
+      formattedData,
+      analysisReport,
+      resourceType: "contact",
+    });
   });
 
   static uploadOpportunityInBulk = catchAsyncError(async (req, res) => {
     let { check } = req.query;
-    check = check == 'true' ? true : false;
+    check = check == "true" ? true : false;
     const stream = Readable.from(req.file.buffer.toString());
     const bulkData = await csv().fromStream(stream);
     const indexToRemove = 0;
@@ -52,22 +79,27 @@ class UploadController {
       updatedBulkData,
       "opportunity"
     );
-    
 
     const revenueData = parseRevenueData(bulkData);
-      const revenueIdData = await generateRevenues(revenueData);
-      console.log(revenueData);
-      console.log(revenueIdData);
-      revenueIdData.forEach((revenueArray, idx) => {
-        formattedData[idx]["revenue"] = revenueArray;
-      });
-    
-    await sendBulkUploadResponse(res, check, bulkData, formattedData, analysisResult, 'opportunity');
+    const revenueIdData = await generateRevenues(revenueData);
+    console.log(revenueData);
+    console.log(revenueIdData);
+    revenueIdData.forEach((revenueArray, idx) => {
+      formattedData[idx]["revenue"] = revenueArray;
+    });
+
+    await sendBulkUploadResponse(
+      res,
+      check,
+      bulkData,
+      formattedData,
+      analysisResult,
+      "opportunity"
+    );
     return;
   });
 
   static uploadTenderInBulk = catchAsyncError(async (req, res) => {
-    
     let { check } = req.query;
     check = check === "true" ? true : false;
     const stream = Readable.from(req.file.buffer.toString());
@@ -79,11 +111,18 @@ class UploadController {
     );
     console.log("analysis result ---", analysisResult);
     console.log("formatted data ---", formattedData);
-    await sendBulkUploadResponse(res, check, bulkData, formattedData, analysisResult, 'tender');
-    return
+    await sendBulkUploadResponse(
+      res,
+      check,
+      bulkData,
+      formattedData,
+      analysisResult,
+      "tender"
+    );
+    return;
   });
-  
-  static uploadBDInBulk = catchAsyncError(async (req, res)=>{
+
+  static uploadBDInBulk = catchAsyncError(async (req, res) => {
     let { check } = req.query;
     check = check === "true" ? true : false;
     const stream = Readable.from(req.file.buffer.toString());
@@ -95,10 +134,16 @@ class UploadController {
     );
     console.log("analysis result for bd---", analysisResult);
     console.log("formatted data bd ---", formattedData);
-    await sendBulkUploadResponse(res, check, bulkData, formattedData, analysisResult, 'businessDevelopment');
-    return
-  })
-
+    await sendBulkUploadResponse(
+      res,
+      check,
+      bulkData,
+      formattedData,
+      analysisResult,
+      "businessDevelopment"
+    );
+    return;
+  });
 }
 
 export default UploadController;

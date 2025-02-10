@@ -8,7 +8,7 @@ clientMasterConfigRouter.get(
   ClientMasterConfigController.getAllClassifications
 );
 clientMasterConfigRouter.get(
-  "/classification/:classificationId",
+  "/classification/:id",
   ClientMasterConfigController.getClassificationById
 );
 clientMasterConfigRouter.post(
@@ -16,11 +16,11 @@ clientMasterConfigRouter.post(
   ClientMasterConfigController.createClassification
 );
 clientMasterConfigRouter.put(
-  "/classification/:classificationId",
+  "/classification/:id",
   ClientMasterConfigController.updateClassification
 );
 clientMasterConfigRouter.delete(
-  "/classification/:classificationId",
+  "/classification/:id",
   ClientMasterConfigController.deleteClassification
 );
 

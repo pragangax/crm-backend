@@ -43,6 +43,8 @@ class ClientMasterConfigController {
   static updateClassification = catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
     const updateData = req.body;
+    console.log("classifiction id : ", id)
+    console.log("classifiction data: ", updateData)
     
     const classification = await ClassificationModel.findByIdAndUpdate(
       id,
@@ -61,7 +63,7 @@ class ClientMasterConfigController {
 
   static deleteClassification = catchAsyncError(async (req, res, next) => {
     const { id } = req.params;
-    const  classification = await getClassification(classificationId);
+    const  classification = await getClassification(id);
     await ClassificationModel.findByIdAndDelete(
       id
     );

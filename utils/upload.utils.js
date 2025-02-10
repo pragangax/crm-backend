@@ -7,11 +7,14 @@ import ExcelJS from "exceljs";
 import { Readable } from "stream";
 import { parse } from "json2csv";
 import {
-  clientFieldMapping,
+  clientFieldMap,
   contactFieldMap,
   opportunityFieldMap,
   tenderFieldMap,
   bdFieldMap,
+  fieldMapping,
+  getFieldMapping,
+  validationRulesMap,
 } from "../controllers/upload/fieldMap.js";
 import ClassificationModel from "../models/ConfigModels/ClientMaster/ClassificationModel.js";
 import IncorporationTypeModel from "../models/ConfigModels/ClientMaster/IncorporationTypeModel.js";
@@ -28,128 +31,61 @@ import SalesStageModel from "../models/StageModels/SalesStageModel.js";
 import SalesSubStageModel from "../models/StageModels/SalesSubStage.js";
 import TenderStageModel from "../models/ConfigModels/TenderMaster/TenderStageModel.js";
 import BusinessDevelopmentModel from "../models/BusinessDevelopmentModel.js";
+import { ClientError, ServerError } from "./customErrorHandler.utils.js";
 
-export const getFormattedData = async (bulkData, resource) => {
-  const classificationMap = await ClassificationModel.find({}).then(
-    (classifications) => {
-      return classifications.reduce((acc, item) => {
-        acc[item.label] = item._id;
+const createMap = async (Model) => {
+  const data = await Model.find({});
+  return data.reduce((acc, item) => {
+    acc[item.label] = item._id;
+    return acc;
+  }, {});
+};
+
+export const getAllFieldMap = async () => {
+  const [
+    classificationMap,
+    incorporationTypeMap,
+    relationshipStatusMap,
+    industryMap,
+    subIndustryMap,
+    territoryMap,
+    archTypeMap,
+    solutionMap,
+    salesStageMap,
+    salesSubStageMap,
+    relationshipDegreeMap,
+    tenderStageMap,
+  ] = await Promise.all([
+    createMap(ClassificationModel),
+    createMap(IncorporationTypeModel),
+    createMap(RelationshipStatusModel),
+    createMap(IndustryMasterModel),
+    createMap(SubIndustryModel),
+    createMap(TerritoryModel),
+    createMap(ArchetypeModel),
+    createMap(SolutionMasterModel),
+    createMap(SalesStageModel),
+    createMap(SalesSubStageModel),
+    createMap(RelationshipDegreeModel),
+    createMap(TenderStageModel),
+  ]);
+  const userMap = await UserModel.find({})
+    .select("firstName lastName")
+    .then((users) => {
+      return users.reduce((acc, item) => {
+        acc[item.firstName + " " + item.lastName] = item._id;
         return acc;
       }, {});
-    }
-  );
+    });
 
-  const incorporationTypeMap = await IncorporationTypeModel.find({}).then(
-    (types) => {
-      return types.reduce((acc, item) => {
-        acc[item.label] = item._id;
+  const contactMap = await ContactMasterModel.find({})
+    .select("firstName lastName")
+    .then((contacts) => {
+      return contacts.reduce((acc, item) => {
+        acc[item.firstName + " " + item.lastName] = item._id;
         return acc;
       }, {});
-    }
-  );
-
-  const relationshipStatusMap = await RelationshipStatusModel.find({}).then(
-    (statuses) => {
-      return statuses.reduce((acc, item) => {
-        acc[item.label] = item._id;
-        return acc;
-      }, {});
-    }
-  );
-
-  const industryMap = await IndustryMasterModel.find({}).then((industries) => {
-    return industries.reduce((acc, item) => {
-      acc[item.label] = item._id;
-      return acc;
-    }, {});
-  });
-
-  const subIndustryMap = await SubIndustryModel.find({}).then(
-    (industries) => {
-      return industries.reduce((acc, item) => {
-        acc[item.label] = item._id;
-        return acc;
-      }, {});
-    }
-  );
-
-  const territoryMap = await TerritoryModel.find({}).then(
-    (territories) => {
-      return territories.reduce((acc, item) => {
-        acc[item.label] = item._id;
-        return acc;
-      }, {});
-    }
-  );
-
-  // const userMap = await StaffModel.find({}).then((staffs) => {
-  //   return staffs.reduce((acc, item) => {
-  //     acc[item.firstName + " " + item.lastName] = item._id;
-  //     return acc;
-  //   }, {});
-  // });
-
-  const userMap = await UserModel.find({}).then((users) => {
-    return users.reduce((acc, item) => {
-      acc[item.firstName + " " + item.lastName] = item._id;
-      return acc;
-    }, {});
-  });
-
-  const archTypeMap = await ArchetypeModel.find({}).then((archType) => {
-    return archType.reduce((acc, item) => {
-      acc[item.label] = item._id;
-      return acc;
-    }, {});
-  });
-
-  const solutionMap = await SolutionMasterModel.find({}).then((solution) => {
-    return solution.reduce((acc, item) => {
-      acc[item.label] = item._id;
-      return acc;
-    }, {});
-  });
-
-  const salesStageMap = await SalesStageModel.find({}).then(
-    (salesStage) => {
-      return salesStage.reduce((acc, item) => {
-        acc[item.label] = item._id;
-        return acc;
-      }, {});
-    }
-  );
-
-  const salesSubStageMap = await SalesSubStageModel.find({}).then(
-    (salesSubStage) => {
-      return salesSubStage.reduce((acc, item) => {
-        acc[item.label] = item._id;
-        return acc;
-      }, {});
-    }
-  );
-
-  const relationshipDegreeMap = await RelationshipDegreeModel.find({}).then(
-    (RSDegrees) => {
-      return RSDegrees.reduce((acc, item) => {
-        acc[item.label] = item._id;
-        return acc;
-      }, {});
-    }
-  );
-
-  const tenderStageMap = await TenderStageModel.find({}).then((tenders) => {
-    return tenders.reduce((acc, item) => {
-      acc[item.label] = item._id;
-      return acc;
-    }, {});
-  });
-
-  const contactMap = await ContactMasterModel.find({}).then((contacts) => {
-    return contacts.reduce((acc, item) => {
-      acc[item.firstName + " " + item.lastName] = item._id;
-      return acc;
-    }, {});
-  });
+    });
 
   const clientMap = await ClientMasterModel.find({})
     .select("name")
@@ -160,32 +96,121 @@ export const getFormattedData = async (bulkData, resource) => {
       }, {});
     });
 
-  console.log("contact map----", contactMap);
+  return {
+    classificationMap,
+    incorporationTypeMap,
+    relationshipStatusMap,
+    industryMap,
+    subIndustryMap,
+    territoryMap,
+    archTypeMap,
+    solutionMap,
+    salesStageMap,
+    salesSubStageMap,
+    relationshipDegreeMap,
+    tenderStageMap,
+    userMap,
+    contactMap,
+    clientMap,
+  };
+};
 
-  let csvToModelMap = null;
+// export const generateAnalysisResult = ({
+//   formattedData,
+//   bulkData,
+//   resource,
+// }) => {
+//   let analysisResult = {};
+//   const csvToModelFieldMap = getFieldMapping(resource);
+//   bulkData.forEach((row, rowIdx) => {
+//     Object.keys(row).forEach((csvField, colIdx) => {
+//       const modelField = csvToModelFieldMap[csvField];
+//       if (
+//         modelField !== undefined &&
+//         formattedData[rowIdx][modelField] === undefined
+//       ) {
+//         if (!analysisResult[rowIdx]) {
+//           analysisResult[rowIdx] = [];
+//         }
+//         analysisResult[rowIdx].push({
+//           [colIdx]: { field: csvField, value: row[csvField] },
+//         });
+//       }
+//     });
+//   });
+//   return analysisResult;
+// };
 
-  switch (resource) {
-    case "client":
-      csvToModelMap = clientFieldMapping;
-      break;
-    case "contact":
-      csvToModelMap = contactFieldMap;
-      break;
-    case "opportunity":
-      csvToModelMap = opportunityFieldMap;
-      break;
-    case "tender":
-      csvToModelMap = tenderFieldMap;
-      break;
-    case "businessDevelopment":
-      csvToModelMap = bdFieldMap;
-  }
+// Formats the raw json data extracted from csv into db form
 
+
+// Analysis Report with Validation
+export const generateAnalysisReport = ({ formattedData, bulkData, resource }) => {
   let analysisResult = {};
-  const formattedData = bulkData.map((row, rowIdx) => {
-    let formattedRow = {};
+  const csvToModelFieldMap = getFieldMapping(resource);
+
+  bulkData.forEach((row, rowIdx) => {
     Object.keys(row).forEach((csvField, colIdx) => {
-      const modelField = csvToModelMap[csvField];
+      const modelField = csvToModelFieldMap[csvField];
+
+      // If the field is not mapped correctly
+      if (modelField !== undefined && formattedData[rowIdx][modelField] === undefined) {
+        if (!analysisResult[rowIdx]) {
+          analysisResult[rowIdx] = [];
+        }
+        analysisResult[rowIdx].push({
+          [colIdx]: { field: csvField, value: row[csvField], error: "Missing or unmapped field" }
+        });
+      }
+
+      // Apply validations if defined for the field
+      if (modelField && validationRulesMap[modelField]) {
+        validationRulesMap[modelField].forEach((validateFunc) => {
+          const errorMessage = validateFunc(row[csvField]);  // Run validation
+          if (errorMessage) {
+            if (!analysisResult[rowIdx]) {
+              analysisResult[rowIdx] = [];
+            }
+            analysisResult[rowIdx].push({
+              [colIdx]: { field: csvField, value: row[csvField], error: errorMessage }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  return analysisResult;
+};
+
+
+
+export const getFormattedData = async ({ bulkData, resource }) => {
+  const {
+    classificationMap,
+    incorporationTypeMap,
+    relationshipStatusMap,
+    industryMap,
+    subIndustryMap,
+    territoryMap,
+    archTypeMap,
+    solutionMap,
+    salesStageMap,
+    salesSubStageMap,
+    relationshipDegreeMap,
+    tenderStageMap,
+    userMap,
+    contactMap,
+    clientMap,
+  } = await getAllFieldMap();
+
+  // Extracting field csvToModelFieldMap acc to resource
+  const csvToModelFieldMap = getFieldMapping(resource);
+
+  const formattedData = bulkData.map((row) => {
+    let formattedRow = {};
+    Object.keys(row).forEach((csvField) => {
+      const modelField = csvToModelFieldMap[csvField];
       if (modelField) {
         switch (modelField) {
           case "classification":
@@ -193,7 +218,6 @@ export const getFormattedData = async (bulkData, resource) => {
             break;
           case "enteredBy":
             formattedRow[modelField] = userMap[row[csvField]];
-            console.log("enteredBy csv field ----", row[csvField]);
             break;
           case "incorporationType":
             formattedRow[modelField] = incorporationTypeMap[row[csvField]];
@@ -205,7 +229,10 @@ export const getFormattedData = async (bulkData, resource) => {
             formattedRow[modelField] = row[csvField] === "Listed";
             break;
           case "entryDate":
-            formattedRow[modelField] = new Date(row[csvField]);
+            const parsedDate = new Date(row[csvField]);
+            formattedRow[modelField] = isNaN(parsedDate.getTime())
+              ? null
+              : parsedDate;
             break;
           case "relatedContacts":
             formattedRow[modelField] = null;
@@ -232,73 +259,72 @@ export const getFormattedData = async (bulkData, resource) => {
             formattedRow[modelField] = relationshipDegreeMap[row[csvField]];
             break;
           case "client":
-            if (resource == "businessDevelopment") {
+            if (resource == "businessDevelopment" || resource == "contact") {
               formattedRow[modelField] = clientMap[row[csvField]];
             } else {
               formattedRow[modelField] = null;
             }
             break;
           case "associatedTender":
-            formattedRow[modelField] = null; // Implement getTenderIdByName function
-            break;
+            formattedRow[modelField] = null;
           case "customId":
-            formattedRow[modelField] = null; // Implement getTenderIdByName function
+            formattedRow[modelField] = null;
             break;
           case "solution":
-            formattedRow[modelField] = solutionMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = solutionMap[row[csvField]];
             break;
           case "subSolution":
-            formattedRow[modelField] = solutionMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = solutionMap[row[csvField]];
             break;
           case "salesStage":
-            formattedRow[modelField] = salesStageMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = salesStageMap[row[csvField]];
             break;
           case "salesSubStage":
-            formattedRow[modelField] = salesSubStageMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = salesSubStageMap[row[csvField]];
             break;
           case "salesChamp":
-            formattedRow[modelField] = userMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = userMap[row[csvField]];
             break;
           case "officer":
-            formattedRow[modelField] = userMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = userMap[row[csvField]];
             break;
           case "bidManager":
-            formattedRow[modelField] = userMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = userMap[row[csvField]];
             break;
           case "contact":
-            formattedRow[modelField] = contactMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = contactMap[row[csvField]];
             break;
           case "stage":
-            formattedRow[modelField] = tenderStageMap[row[csvField]]; // Implement getSolutionIdByName function
+            formattedRow[modelField] = tenderStageMap[row[csvField]];
             break;
           case "associatedOpportunity":
-            formattedRow[modelField] = null; // Implement getSolutionIdByName function
+            formattedRow[modelField] = null;
             break;
           case "bond":
-            formattedRow[modelField] = bulkData[csvField] == "Y" ? true : false; // Implement getSolutionIdByName function
+            formattedRow[modelField] = bulkData[csvField] == "Y" ? true : false;
             break;
           default:
             formattedRow[modelField] = row[csvField];
-        }
-
-        if (
-          modelField !== undefined &&
-          formattedRow[modelField] === undefined
-        ) {
-          if (!analysisResult[rowIdx]) {
-            analysisResult[rowIdx] = [];
-          }
-          analysisResult[rowIdx] = [
-            ...analysisResult[rowIdx],
-            { [colIdx]: { field: csvField, value: row[csvField] } },
-          ];
         }
       }
     });
     return formattedRow;
   });
 
-  return { formattedData, analysisResult };
+  return formattedData;
+};
+
+export const addMissingFields = (user, formattedData) => {
+  // used to ade
+  if (!user || !formattedData)
+    throw new ServerError(
+      "bulk-upload",
+      "user or data not found for addMissingFields while bulk upload"
+    );
+  formattedData.forEach((doc) => {
+    if (!doc?.enteredBy) doc.enteredBy = user._id;
+    if (!doc?.entryDate) doc.entryDate = new Date(Date.now());
+  });
 };
 
 export const streamToBuffer = async (stream) => {
@@ -309,28 +335,105 @@ export const streamToBuffer = async (stream) => {
   return Buffer.concat(chunks);
 };
 
+// without description of err
+// export const getCorrectionFile = async (
+//   bulkData,
+//   resource,
+//   analysisResult,
+//   formattedData
+// ) => {
+//   let csvToModelFieldMap = null;
+//   switch (resource) {
+//     case "client":
+//       csvToModelFieldMap = clientFieldMapping;
+//       break;
+//     case "contact":
+//       csvToModelFieldMap = contactFieldMap;
+//       break;
+//     case "opportunity":
+//       csvToModelFieldMap = opportunityFieldMap;
+//       break;
+//     case "tender":
+//       csvToModelFieldMap = tenderFieldMap;
+//       break;
+//     case "businessDevelopment":
+//       csvToModelFieldMap = bdFieldMap;
+//       break;
+//   }
+
+//   const workbook = new ExcelJS.Workbook();
+//   const worksheet = workbook.addWorksheet("Sheet1");
+
+//   // Write headers
+//   const headers = Object.keys(csvToModelFieldMap).map((field) => field);
+//   worksheet.addRow(headers);
+//   formattedData.forEach((row, rowIdx) => {
+//     worksheet.addRow(
+//       headers.map(
+//         (header) => row[csvToModelFieldMap[header]] || bulkData[rowIdx][header]
+//       )
+//     );
+//   });
+
+//   // Apply highlights based on the analysisResult
+//   Object.keys(analysisResult).forEach((rowIdx) => {
+//     const cells = analysisResult[rowIdx];
+//     cells.forEach((cell) => {
+//       Object.keys(cell).forEach((colIdx) => {
+//         const cellAddress = worksheet.getCell(
+//           parseInt(rowIdx) + 2,
+//           parseInt(colIdx) + 1
+//         );
+//         cellAddress.fill = {
+//           type: "pattern",
+//           pattern: "solid",
+//           fgColor: { argb: "FFFFC0C0" }, // Light red background
+//         };
+//       });
+//     });
+//   });
+
+//   // Write the workbook to a file
+//   const uniqueName = Array.from({ length: 4 }, () =>
+//     String.fromCharCode(65 + Math.floor(Math.random() * 26))
+//   ).join("");
+//   const buffer = await workbook.xlsx.writeBuffer();
+//   const file = {
+//     buffer: buffer,
+//     originalname: `${resource}-${uniqueName}.xlsx`,
+//   };
+//   const correctionFileUrl = await uploadAndGetAvatarUrl(
+//     file,
+//     `CRM/${resource}/correctionFiles`,
+//     file.originalname,
+//     "stream"
+//   );
+
+//   return correctionFileUrl;
+// };
+
 export const getCorrectionFile = async (
   bulkData,
   resource,
   analysisResult,
   formattedData
 ) => {
-  let csvToModelMap = null;
+  let csvToModelFieldMap = null;
   switch (resource) {
     case "client":
-      csvToModelMap = clientFieldMapping;
+      csvToModelFieldMap = clientFieldMapping;
       break;
     case "contact":
-      csvToModelMap = contactFieldMap;
+      csvToModelFieldMap = contactFieldMap;
       break;
     case "opportunity":
-      csvToModelMap = opportunityFieldMap;
+      csvToModelFieldMap = opportunityFieldMap;
       break;
     case "tender":
-      csvToModelMap = tenderFieldMap;
+      csvToModelFieldMap = tenderFieldMap;
       break;
     case "businessDevelopment":
-      csvToModelMap = bdFieldMap;
+      csvToModelFieldMap = bdFieldMap;
       break;
   }
 
@@ -338,30 +441,43 @@ export const getCorrectionFile = async (
   const worksheet = workbook.addWorksheet("Sheet1");
 
   // Write headers
-  const headers = Object.keys(csvToModelMap).map((field) => field);
+  const headers = Object.keys(csvToModelFieldMap).map((field) => field);
   worksheet.addRow(headers);
+
   formattedData.forEach((row, rowIdx) => {
     worksheet.addRow(
       headers.map(
-        (header) => row[csvToModelMap[header]] || bulkData[rowIdx][header]
+        (header) => row[csvToModelFieldMap[header]] || bulkData[rowIdx][header]
       )
     );
   });
 
-  // Apply highlights based on the analysisResult
+  // Apply highlights and comments based on analysisResult
   Object.keys(analysisResult).forEach((rowIdx) => {
     const cells = analysisResult[rowIdx];
+
     cells.forEach((cell) => {
       Object.keys(cell).forEach((colIdx) => {
+        const errorDetails = cell[colIdx]; // Contains { field, value, error }
         const cellAddress = worksheet.getCell(
-          parseInt(rowIdx) + 2,
-          parseInt(colIdx) + 1
+          parseInt(rowIdx) + 2, // Row index (Excel is 1-based)
+          parseInt(colIdx) + 1  // Column index (Excel is 1-based)
         );
+
+        // Highlight cell
         cellAddress.fill = {
           type: "pattern",
           pattern: "solid",
           fgColor: { argb: "FFFFC0C0" }, // Light red background
         };
+
+        // Add error description as a comment (if available)
+        if (errorDetails.error) {
+          cellAddress.note = {
+            texts: [{ text: `Error: ${errorDetails.error}` }],
+            margins: { inset: [0.1, 0.1, 0.1, 0.1] }, // Adjusts padding
+          };
+        }
       });
     });
   });
@@ -385,33 +501,35 @@ export const getCorrectionFile = async (
   return correctionFileUrl;
 };
 
-export const sendBulkUploadResponse = async (
+
+const getEntityModel = (resourceType) => {
+  const models = {
+    client: ClientMasterModel,
+    tender: TenderMasterModel,
+    opportunity: OpportunityMasterModel,
+    businessDevelopment: BusinessDevelopmentModel,
+    contact: ContactMasterModel,
+  };
+  const resourceModel = models[resourceType] || null;
+  if (!resourceModel)
+    throw new ServerError(
+      "resource",
+      "Invalid resource type in getEntityModel"
+    );
+  return resourceModel;
+};
+
+export const sendBulkUploadResponse = async ({
   res,
   check,
   bulkData,
   formattedData,
-  analysisResult,
-  resourceType
-) => {
-  let EntityModel = null;
-  switch (resourceType) {
-    case "client":
-      EntityModel = ClientMasterModel;
-      break;
-    case "contact":
-      EntityModel = ContactMasterModel;
-      break;
-    case "tender":
-      EntityModel = TenderMasterModel;
-      break;
-    case "opportunity":
-      EntityModel = OpportunityMasterModel;
-      break;
-    case "businessDevelopment":
-      EntityModel = BusinessDevelopmentModel;
-      break;
-  }
-  if (!check && Object.keys(analysisResult).length === 0) {
+  analysisReport,
+  resourceType,
+}) => {
+  const EntityModel = getEntityModel(resourceType);
+
+  if (!check && Object.keys(analysisReport).length === 0) {
     const entities = await EntityModel.insertMany(formattedData);
     const uniqueName = new Date().toLocaleString();
     const ids = entities.map((client) => client._id.toString());
@@ -442,7 +560,7 @@ export const sendBulkUploadResponse = async (
     const correctionFileUrl = await getCorrectionFile(
       bulkData,
       `${resourceType}`,
-      analysisResult,
+      analysisReport,
       formattedData
     );
     res.json({

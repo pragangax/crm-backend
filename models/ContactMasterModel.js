@@ -1,20 +1,10 @@
 import mongoose from "mongoose";
+import ClientMasterModel from "./ClientMasterModel.js";
 
-const AddressSchema = new mongoose.Schema({
-   city : {
-    type : String,
-   },
-   state : {
-    type : String,
-   },
-   country : {
-    type : String
-   }
-})
 const ContactMasterSchema = new mongoose.Schema({
-  avatar : {
-   type : String,
-   default : null
+  avatar: {
+    type: String,
+    default: null,
   },
   gender: {
     type: String,
@@ -68,52 +58,70 @@ const ContactMasterSchema = new mongoose.Schema({
   archeType: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Archetype",
-    // enum: [
-    //   "Decision Maker",
-    //   "Influencer",
-    //   "Economic Buyer",
-    //   "Technical Evaluator",
-    //   "Specifier ",
-    //   "Detractor",
-    //   "Generic",
-    // ],
   },
   relationshipDegree: {
-    type : mongoose.Schema.Types.ObjectId,
-    ref : "RelationshipDegree"
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "RelationshipDegree",
   },
-  // address : {
-  //   type: AddressSchema
-  // },
-  territory :{
-    type : mongoose.Schema.Types.ObjectId,
-    required : true,
-    ref : "Territory"
+  territory: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "Territory",
   },
-  country : {
-    type : String
-   },
+  country: {
+    type: String,
+  },
   memorableDetail: {
     type: String,
   },
-  // detailsConfirmation : {
-  //   type : Boolean,
-  //   default : false+
-  // },
-  // notes : [
-  //    {
-  //     type : mongoose.Schema.Types.ObjectId,
-  //     ref : "Note"
-  //    }
-  // ]
-  notes: [{
-    type: String
-}]
+  notes: [
+    {
+      type: String,
+    },
+  ],
+}, { timestamps: true });
 
-},{timestamps : true});
 
-const ContactMasterModel = new mongoose.model(
-  "ContactMaster",
-  ContactMasterSchema
-);
+// Middleware to update ClientMaster's relatedContacts when a contact is created
+ContactMasterSchema.post("save", async function (doc) {
+  try {
+    if (doc.client) {
+      await ClientMasterModel.findByIdAndUpdate(
+        doc.client,
+        { $addToSet: { relatedContacts: doc._id } }, // Add contact ID to relatedContacts array
+        { new: true }
+      );
+    }
+  } catch (err) {
+    console.error("Error updating ClientMaster relatedContacts:", err);
+  }
+});
+
+// Middleware to update multiple clients when insertMany is used
+ContactMasterSchema.post("insertMany", async function (docs) {
+  try {
+    const clientUpdates = {};
+    
+    docs.forEach((doc) => {
+      if (doc.client) {
+        if (!clientUpdates[doc.client]) {
+          clientUpdates[doc.client] = [];
+        }
+        clientUpdates[doc.client].push(doc._id);
+      }
+    });
+
+    for (const [clientId, contactIds] of Object.entries(clientUpdates)) {
+      await ClientMasterModel.findByIdAndUpdate(
+        clientId,
+        { $addToSet: { relatedContacts: { $each: contactIds } } },
+        { new: true }
+      );
+    }
+  } catch (err) {
+    console.error("Error updating ClientMaster relatedContacts in insertMany:", err);
+  }
+});
+
+const ContactMasterModel = mongoose.model("ContactMaster", ContactMasterSchema);
 export default ContactMasterModel;
