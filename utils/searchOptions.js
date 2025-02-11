@@ -28,7 +28,9 @@ export const getFilterOptions = (query)=>{
 }
 
 export const getSortingOptions = (query)=>{
-  if(!query) return {};
+  if(!query) return {
+    createdAt : 1
+  };
   const {name, entry_date} = query
   console.log("getSortingOptions : ", name, entry_date )
   let sortingOptions = {entryDate : -1}

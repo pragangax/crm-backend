@@ -40,9 +40,9 @@ export const ClientMasterSchema = new mongoose.Schema({
         required : true,
         ref : "Territory"
     },
-    // pursuedOpportunityValue :{
-    //     // Yet to derive
-    // },
+    pursuedOpportunityValue :{
+        type : String
+    },
     incorporationType : {
         type :  mongoose.Schema.Types.ObjectId,
         ref : "IncorporationType",

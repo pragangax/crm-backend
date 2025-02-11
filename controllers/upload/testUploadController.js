@@ -12,23 +12,36 @@ import { getFormattedData } from "../../utils/upload.utils.js";
 
 class UploadController {
   static uploadClientInBulk = catchAsyncError(async (req, res) => {
-    let { check } = req.query;
-    check = check === "true" ? true : false;
-    const stream = Readable.from(req.file.buffer.toString());
-    const bulkData = await csv().fromStream(stream);
-    // console.log("csv from steam : ", bulkData);
-    const { formattedData, analysisResult } = await getFormattedData(
+    const { check, bulkData } = req;
+    console.log("bulk-upload-raw-data :", bulkData);
+    
+    //converts raw data from the csv to db compatible formate
+    const formattedData = await getFormattedData({
       bulkData,
-      `client`
-    );
-    await sendBulkUploadResponse(
+      resource: "client",
+    });
+    console.log("bulk-upload-formatted-data", formattedData);
+    
+    //Adds enteredBy and entryDate
+    addMissingFields(req.user, formattedData);
+    console.log("bulk-upload-missing-fields-added", formattedData);
+    
+    //Creates map of positions to be marked as mistake in correction file 
+    const analysisReport = generateAnalysisReport({
+      formattedData,
+      bulkData,
+      resource: "client",
+    });
+    console.log("bulk-upload-analysis-result", analysisReport);
+
+    await sendBulkUploadResponse({
       res,
       check,
       bulkData,
       formattedData,
-      analysisResult,
-      "client"
-    );
+      analysisReport,
+      resourceType: "client",
+    });
   });
 
   static uploadContactInBulk = catchAsyncError(async (req, res) => {

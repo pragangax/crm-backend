@@ -7,22 +7,24 @@ export const clientFieldMap = {
     "Sub Industry": "subIndustry",
     "What do they do": "Offering",
     Territory: "territory",
-    "Pursued Opportunity Value": "PursuedOpportunityValue",
+    "Pursued Opportunity Value": "pursuedOpportunityValue",
     "Incorporation Type": "incorporationType",
     "Listed Company": "listedCompany",
     "Market Cap": "marketCap",
-    "Annual Revenue (QAR)": "annualRevenue",
+    "Annual Revenue": "annualRevenue",
     Classification: "classification",
     "Employee Strength": "totalEmployeeStrength",
     "IT Employee Strength": "itEmployeeStrength",
     "Primary Relationship Holder": "primaryRelationship",
-    "Secondary Relationship Holder (Pref Economic)": "secondaryRelationship",
+    "Secondary Relationship Holder": "secondaryRelationship",
     "Relationship Status": "relationshipStatus",
-    "Details are upto date": "detailsConfirmation",
-    "Related Contacts": "relatedContacts",
+    // "Details are upto date": "detailsConfirmation",
+    // "Related Contacts": "relatedContacts",
     "Lifetime Value": "lifeTimeValue",
     Priority: "priority",
-    Action: "Action",
+    // Action: "Action",
+    requiredFields : ["Client Name", "Industry", "Sub Industry", "Territory", "Incorporation Type"]
+
   };
   export const contactFieldMap = {
     Gender: "gender",
@@ -30,7 +32,7 @@ export const clientFieldMap = {
     "Entered By": "enteredBy",
     "First Name": "firstName",
     "Last Name": "lastName",
-    "Client Name": "client", //remove this field
+    "Client Name": "client",
     "Job Title": "jobTitle",
     Phone: "phone",
     "Work Email": "workEmail",
@@ -41,7 +43,8 @@ export const clientFieldMap = {
     "Location": "city",
     "Memorable Aspect": "memorableDetail",
     "Notes": "notes",
-    // "Notes / Recent Interactions": "notes",
+    "Territory" : "territory",
+    requiredFields : ["First Name", "Last Name", "Gender", "Phone", "Relationship Degree", "Territory"]
   };
 
   export const opportunityFieldMap = {
@@ -122,24 +125,26 @@ export const clientFieldMap = {
     }
     return csvToModelFieldMap;
   }
-  const validationRules = {
-    email: [
-      (value) => (value === "" ? null : (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "Invalid email format" : null)) // Ignore empty, validate others
-    ],
-    phone: [
-      (value) => (value === "" ? null : (!/^\d+$/.test(value) ? "Phone must contain only numbers" : null)), // Ignore empty, validate others
-      (value) => (value === "" ? null : (value.length < 7 || value.length > 15 ? "Phone number must be between 7 and 15 digits" : null)) // Ignore empty, validate others
-    ],
-    numericString: [
-      (value) => (!/^\d+$/.test(value) ? "Must be a numeric string" : null)  // Ensures only numbers
-    ],
-    alphabeticString: [
-      (value) => (!/^[a-zA-Z]+$/.test(value) ? "Must contain only alphabetic characters" : null)  // Ensures only letters
-    ],
-    gender: [
-      (value) => (!/^(M|F|O)$/.test(value) ? 'Gender must be "M", "F", or "O"' : null) // Only allows M, F, or O
-    ]
-  };
+
+const validationRules = {
+  email: [
+    (value) => (value === "" ? null : (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "Invalid email format" : null)) // Ignore empty, validate others
+  ],
+  phone: [
+    (value) => (value === "" ? null : (!/^\d+$/.test(value) ? "Phone must contain only numbers" : null)), // Ignore empty, validate others
+    (value) => (value === "" ? null : (value.length < 7 || value.length > 15 ? "Phone number must be between 7 and 15 digits" : null)) // Ignore empty, validate others
+  ],
+  numericString: [
+    (value) => (value === "" ? null : (!/^\d+$/.test(value) ? "Must be a numeric string" : null))  // Ignore empty, ensure only numbers
+  ],
+  alphabeticString: [
+    (value) => (value === "" ? null : (!/^[a-zA-Z]+$/.test(value) ? "Must contain only alphabetic characters" : null))  // Ignore empty, ensure only letters
+  ],
+  gender: [
+    (value) => (value === "" ? null : (!/^(M|F|O)$/.test(value) ? 'Gender must be "M", "F", or "O"' : null)) // Ignore empty, validate gender
+  ]
+};
+
   
   
   // Used at the time of generating analysis result of bulk data
@@ -150,4 +155,9 @@ export const clientFieldMap = {
     workEmail : validationRules.email,
     personalEmail : validationRules.email,
     mobilePhone :validationRules.phone,
+    lifeTimeValue : validationRules.numericString,
+    totalEmployeeStrength : validationRules.numericString,
+    itEmployeeStrength : validationRules.numericString,
+
+
   }

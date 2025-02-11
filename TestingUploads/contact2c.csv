@@ -1,3 +1,3 @@
-﻿Gender,Entry Date,Entered By ,First Name,Last Name,Client Name,Job Title,Phone,Work Email,Mobile Phone,Personal Email,Archetype,Relationship Degree,Location,Memorable Aspect,Notes
-M,"Aug 1, 2024",Ashwin Gorle,Anand,Ambani,insert testing final,CEO,1234565,ambani@reliance.com,3478555,,Generic,2nd degree (Knows us),Mumbai ,Loves Kandvi,Met at his sons prewedding
-M,,Ashwin,Sunil ,Mittal,Reliance Geo,Manager,456784,sunil@airtel.com,1234343,sunil@airtel.com,Technical Evaluator,1st deegree (Very Close),Dubai,Owns fancy cars,Met at Mumbai airport lounge
+﻿Gender,Entry Date,Entered By ,First Name,Last Name,Client Name,Job Title,Phone,Work Email,Mobile Phone,Personal Email,Archetype,Relationship Degree,Location,Memorable Aspect,Notes,Territory
+F,"Aug 1, 2024",Ashwin Gorle,Games,Games,insert testing final,CEO,1234567894,ambani@reliance.com,3478555,,Generic,2nd degree (Knows us),Mumbai ,Loves Kandvi,Met at his sons prewedding,Chennai SCRU-I
+M,01-01-2003,Priyanshu Jaj,name,name,insert testing final,Manager,1234567897,sunil@airtel.com,1234343,sunil@airtel.com,Technical Evaluator,1st deegree (Very Close),Dubai,Owns fancy cars,Met at Mumbai airport lounge,Chennai SCRU-I

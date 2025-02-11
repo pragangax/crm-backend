@@ -32,6 +32,7 @@ import SalesSubStageModel from "../models/StageModels/SalesSubStage.js";
 import TenderStageModel from "../models/ConfigModels/TenderMaster/TenderStageModel.js";
 import BusinessDevelopmentModel from "../models/BusinessDevelopmentModel.js";
 import { ClientError, ServerError } from "./customErrorHandler.utils.js";
+import { createUploadHistory } from "../controllers/Upload History/uploadHistoryController.js";
 
 const createMap = async (Model) => {
   const data = await Model.find({});
@@ -148,7 +149,7 @@ export const getAllFieldMap = async () => {
 export const generateAnalysisReport = ({ formattedData, bulkData, resource }) => {
   let analysisResult = {};
   const csvToModelFieldMap = getFieldMapping(resource);
-
+  const requiredFields = csvToModelFieldMap?.requiredFields;
   bulkData.forEach((row, rowIdx) => {
     Object.keys(row).forEach((csvField, colIdx) => {
       const modelField = csvToModelFieldMap[csvField];
@@ -159,7 +160,17 @@ export const generateAnalysisReport = ({ formattedData, bulkData, resource }) =>
           analysisResult[rowIdx] = [];
         }
         analysisResult[rowIdx].push({
-          [colIdx]: { field: csvField, value: row[csvField], error: "Missing or unmapped field" }
+          [colIdx]: { field: csvField, value: row[csvField], error: `Mapping for "${bulkData[rowIdx][csvField]}" as ${modelField}, does not exits in system \n 1) Add this "${bulkData[rowIdx][csvField]}" as ${modelField} from configuration or respective panel` }
+        });
+      }
+
+      // Adding validation for requiredFields
+      if (modelField !== undefined && requiredFields?.includes(csvField) && (formattedData[rowIdx][modelField] === null || formattedData[rowIdx][modelField] === '') ) {
+        if (!analysisResult[rowIdx]) {
+          analysisResult[rowIdx] = [];
+        }
+        analysisResult[rowIdx].push({
+          [colIdx]: { field: csvField, value: row[csvField], error: `${modelField} field is Required! ` }
         });
       }
 
@@ -177,6 +188,8 @@ export const generateAnalysisReport = ({ formattedData, bulkData, resource }) =>
           }
         });
       }
+
+      // Apply required validation
     });
   });
 
@@ -214,19 +227,19 @@ export const getFormattedData = async ({ bulkData, resource }) => {
       if (modelField) {
         switch (modelField) {
           case "classification":
-            formattedRow[modelField] = classificationMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : classificationMap[row[csvField]];
             break;
           case "enteredBy":
-            formattedRow[modelField] = userMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : userMap[row[csvField]];
             break;
           case "incorporationType":
-            formattedRow[modelField] = incorporationTypeMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : incorporationTypeMap[row[csvField]];
             break;
           case "relationshipStatus":
-            formattedRow[modelField] = relationshipStatusMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : relationshipStatusMap[row[csvField]];
             break;
           case "listedCompany":
-            formattedRow[modelField] = row[csvField] === "Listed";
+            formattedRow[modelField] = row[csvField] == '' ? null : row[csvField] === "Listed";
             break;
           case "entryDate":
             const parsedDate = new Date(row[csvField]);
@@ -238,29 +251,29 @@ export const getFormattedData = async ({ bulkData, resource }) => {
             formattedRow[modelField] = null;
             break;
           case "industry":
-            formattedRow[modelField] = industryMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : industryMap[row[csvField]];
             break;
           case "subIndustry":
-            formattedRow[modelField] = subIndustryMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : subIndustryMap[row[csvField]];
             break;
           case "territory":
-            formattedRow[modelField] = territoryMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : territoryMap[row[csvField]];
             break;
           case "primaryRelationship":
-            formattedRow[modelField] = userMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : userMap[row[csvField]];
             break;
           case "secondaryRelationship":
-            formattedRow[modelField] = userMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : userMap[row[csvField]];
             break;
           case "archeType":
-            formattedRow[modelField] = archTypeMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : archTypeMap[row[csvField]];
             break;
           case "relationshipDegree":
-            formattedRow[modelField] = relationshipDegreeMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : relationshipDegreeMap[row[csvField]];
             break;
           case "client":
             if (resource == "businessDevelopment" || resource == "contact") {
-              formattedRow[modelField] = clientMap[row[csvField]];
+              formattedRow[modelField] = row[csvField] == '' ? null : clientMap[row[csvField]];
             } else {
               formattedRow[modelField] = null;
             }
@@ -271,40 +284,40 @@ export const getFormattedData = async ({ bulkData, resource }) => {
             formattedRow[modelField] = null;
             break;
           case "solution":
-            formattedRow[modelField] = solutionMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : solutionMap[row[csvField]];
             break;
           case "subSolution":
-            formattedRow[modelField] = solutionMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : solutionMap[row[csvField]];
             break;
           case "salesStage":
-            formattedRow[modelField] = salesStageMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : salesStageMap[row[csvField]];
             break;
           case "salesSubStage":
-            formattedRow[modelField] = salesSubStageMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : salesSubStageMap[row[csvField]];
             break;
           case "salesChamp":
-            formattedRow[modelField] = userMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : userMap[row[csvField]];
             break;
           case "officer":
-            formattedRow[modelField] = userMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : userMap[row[csvField]];
             break;
           case "bidManager":
-            formattedRow[modelField] = userMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : userMap[row[csvField]];
             break;
           case "contact":
-            formattedRow[modelField] = contactMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : contactMap[row[csvField]];
             break;
           case "stage":
-            formattedRow[modelField] = tenderStageMap[row[csvField]];
+            formattedRow[modelField] = row[csvField] == '' ? null : tenderStageMap[row[csvField]];
             break;
           case "associatedOpportunity":
             formattedRow[modelField] = null;
             break;
           case "bond":
-            formattedRow[modelField] = bulkData[csvField] == "Y" ? true : false;
+            formattedRow[modelField] =  bulkData[csvField] == "Y" ? true : false;
             break;
           default:
-            formattedRow[modelField] = row[csvField];
+            formattedRow[modelField] =  row[csvField];
         }
       }
     });
@@ -421,7 +434,7 @@ export const getCorrectionFile = async (
   let csvToModelFieldMap = null;
   switch (resource) {
     case "client":
-      csvToModelFieldMap = clientFieldMapping;
+      csvToModelFieldMap = clientFieldMap;
       break;
     case "contact":
       csvToModelFieldMap = contactFieldMap;
@@ -519,6 +532,28 @@ const getEntityModel = (resourceType) => {
   return resourceModel;
 };
 
+const getUploadConfirmationFile = async ({entities}) => {
+  const uniqueName = new Date().toLocaleString();
+  const ids = entities.map((entry) => entry._id.toString());
+  const csv = parse(ids.map((id) => ({ id })));
+  const csvStream = new Readable();
+  csvStream.push(csv);
+  csvStream.push(null);
+  const buffer = await streamToBuffer(csvStream);
+  const file = {
+    buffer: buffer,
+    originalname: `${resourceType}-${uniqueName}.csv`,
+  };
+  // Ensure the directory exists (create if it doesn't)
+  const fileUrl = await uploadAndGetAvatarUrl(
+    file,
+    `CRM/BulkUploads/Backup/${resourceType}`,
+    uniqueName,
+    "stream"
+  );
+  return fileUrl
+}
+
 export const sendBulkUploadResponse = async ({
   res,
   check,
@@ -530,30 +565,20 @@ export const sendBulkUploadResponse = async ({
   const EntityModel = getEntityModel(resourceType);
 
   if (!check && Object.keys(analysisReport).length === 0) {
+    // Finally uploading data to db and creating history
     const entities = await EntityModel.insertMany(formattedData);
-    const uniqueName = new Date().toLocaleString();
-    const ids = entities.map((client) => client._id.toString());
-    const csv = parse(ids.map((id) => ({ id })));
-    const csvStream = new Readable();
-    csvStream.push(csv);
-    csvStream.push(null);
-    const buffer = await streamToBuffer(csvStream);
-    const file = {
-      buffer: buffer,
-      originalname: `${resourceType}-${uniqueName}.csv`,
-    };
-    // Ensure the directory exists (create if it doesn't)
-    const fileUrl = await uploadAndGetAvatarUrl(
-      file,
-      `CRM/BulkUploads/Backup/${resourceType}`,
-      uniqueName,
-      "stream"
-    );
+    const uploadedDocIds = entities.map((entry) => entry._id.toString());
+
+    // Create Bulk Upload History 
+    const uploadHistory = await createUploadHistory(resourceType, uploadedDocIds);
+
+    // const fileUrl =  await getUploadConfirmationFile({entities});
+
     res.send({
       status: "success",
       type: "backup",
       message: `${resourceType} bulk import successful`,
-      data: { url: fileUrl },
+      data: { history : uploadHistory},
     });
   } else {
     console.log("jumped in else");
