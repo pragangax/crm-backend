@@ -50,7 +50,8 @@ export const ClientMasterSchema = new mongoose.Schema({
         // enum : ["Independent", "Subsidiary", "Holding", "Government body", "Semi Government", "NGO", "Ministry", "Family Owned", "Employee Owned"]
     },
     listedCompany : {
-        type : Boolean
+        type : String,
+        enum : ['Listed', 'Unlisted']
     },
     marketCap : {
         type : String,
@@ -64,10 +65,10 @@ export const ClientMasterSchema = new mongoose.Schema({
         // enum : ["Platinum", "Gold", "Silver", "Copper", "Bronze", "Nickel"]
     },
     totalEmployeeStrength : {
-        type : Number
+        type : String
     },
     itEmployeeStrength : {
-        type : Number
+        type : String
     },
     primaryRelationship : {
         type : mongoose.Schema.Types.ObjectId,

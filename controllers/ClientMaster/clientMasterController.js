@@ -58,7 +58,8 @@ class ClientMasterController {
       detailsConfirmation,
       createdAt,
     } = updateData;
-
+     
+    console.log("Listed company : ", listedCompany);
     // Validate required fields
     if (
       !name ||

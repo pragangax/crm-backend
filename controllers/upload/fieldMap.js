@@ -156,8 +156,8 @@ const validationRules = {
     personalEmail : validationRules.email,
     mobilePhone :validationRules.phone,
     lifeTimeValue : validationRules.numericString,
-    totalEmployeeStrength : validationRules.numericString,
-    itEmployeeStrength : validationRules.numericString,
+    // totalEmployeeStrength : validationRules.numericString,
+    // itEmployeeStrength : validationRules.numericString,
 
 
   }

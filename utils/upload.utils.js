@@ -239,7 +239,7 @@ export const getFormattedData = async ({ bulkData, resource }) => {
             formattedRow[modelField] = row[csvField] == '' ? null : relationshipStatusMap[row[csvField]];
             break;
           case "listedCompany":
-            formattedRow[modelField] = row[csvField] == '' ? null : row[csvField] === "Listed";
+            formattedRow[modelField] = row[csvField] == '' ? 'Unlisted' : row[csvField];
             break;
           case "entryDate":
             const parsedDate = new Date(row[csvField]);
