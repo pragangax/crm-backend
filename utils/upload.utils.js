@@ -532,7 +532,7 @@ const getEntityModel = (resourceType) => {
   return resourceModel;
 };
 
-const getUploadConfirmationFile = async ({entities}) => {
+const getUploadConfirmationFile = async ({entities, resourceType}) => {
   const uniqueName = new Date().toLocaleString();
   const ids = entities.map((entry) => entry._id.toString());
   const csv = parse(ids.map((id) => ({ id })));
@@ -564,21 +564,23 @@ export const sendBulkUploadResponse = async ({
 }) => {
   const EntityModel = getEntityModel(resourceType);
 
+  console.log("checking-----", check)
   if (!check && Object.keys(analysisReport).length === 0) {
     // Finally uploading data to db and creating history
+    //console.log("uploading data......")
     const entities = await EntityModel.insertMany(formattedData);
     const uploadedDocIds = entities.map((entry) => entry._id.toString());
 
     // Create Bulk Upload History 
     const uploadHistory = await createUploadHistory(resourceType, uploadedDocIds);
 
-    // const fileUrl =  await getUploadConfirmationFile({entities});
+    const fileUrl =  await getUploadConfirmationFile({entities, resourceType});
 
     res.send({
       status: "success",
       type: "backup",
       message: `${resourceType} bulk import successful`,
-      data: { history : uploadHistory},
+      data: { history : uploadHistory, url : fileUrl},
     });
   } else {
     console.log("jumped in else");

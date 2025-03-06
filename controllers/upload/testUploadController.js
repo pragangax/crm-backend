@@ -20,11 +20,11 @@ class UploadController {
       bulkData,
       resource: "client",
     });
-    console.log("bulk-upload-formatted-data", formattedData);
+    // console.log("bulk-upload-formatted-data", formattedData);
     
     //Adds enteredBy and entryDate
     addMissingFields(req.user, formattedData);
-    console.log("bulk-upload-missing-fields-added", formattedData);
+    // console.log("bulk-upload-missing-fields-added", formattedData);
     
     //Creates map of positions to be marked as mistake in correction file 
     const analysisReport = generateAnalysisReport({
