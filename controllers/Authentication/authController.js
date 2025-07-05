@@ -121,7 +121,6 @@ class AuthController {
         solution
       );
       if (req.file) {
-        console.log("new avatar url....");
         newUser.avatar = await uploadAndGetAvatarUrl(
           req.file,
           "user",

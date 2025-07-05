@@ -12,22 +12,23 @@ import { parseRefIds } from "../../utils/stringToArray.utils.js";
 // const ADMIN_ROLE_ID = "67150b16ad87f90fa3ff14a9" || process.env.ADMIN_ROLE_ID;
 const SUPER_ADMIN_ROLE_ID = process.env.SUPER_ADMIN_ROLE_ID;
 const ADMIN_ROLE_ID = process.env.ADMIN_ROLE_ID;
-console.log("pids : ", SUPER_ADMIN_ROLE_ID, ADMIN_ROLE_ID );
+console.log("pids : ", SUPER_ADMIN_ROLE_ID, ADMIN_ROLE_ID);
 
 class UserController {
   static getAllUser = catchAsyncError(async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
+    const deleted = req.query.deleted === "true";
     const { config } = req.query;
-    console.log("")
+    console.log("");
 
     // Check if config is provided and is true
     if (config === "true") {
       const users = await UserModel.find({
         $and: [
           { role: { $nin: [SUPER_ADMIN_ROLE_ID, ADMIN_ROLE_ID] } },
-          { $or: [{ isDeleted: null }, { isDeleted: false }] },
+          { $or: [{ isDeleted: null }, { isDeleted: deleted }] },
         ],
       }).select("firstName lastName");
 
@@ -41,7 +42,7 @@ class UserController {
     let baseQuery = {
       $and: [
         { _id: { $ne: req.user._id } },
-        { $or: [{ isDeleted: null }, { isDeleted: false }] },
+        { $or: [{ isDeleted: null }, { isDeleted: deleted }] },
         {
           role: {
             $nin: [SUPER_ADMIN_ROLE_ID],
@@ -117,7 +118,6 @@ class UserController {
   });
 
   static createUser = catchAsyncError(async (req, res, next) => {
-    
     const password = `AXRC${this.generateAlphabetPassword()}`;
     req.body.password = password;
     req.body.password_confirmation = password;
@@ -132,7 +132,10 @@ class UserController {
     updateData = JSON.parse(JSON.stringify(req.body));
 
     // Parsing RefIds
-    updateData = parseRefIds({data : updateData, fields : ['solution', 'territory', 'industry']})    
+    updateData = parseRefIds({
+      data: updateData,
+      fields: ["solution", "territory", "industry"],
+    });
 
     const user = await UserModel.findById(id);
     if (!user) throw new ServerError("NotFound", "user");
@@ -146,11 +149,10 @@ class UserController {
         if (key == "city" || key == "country" || key == "state") {
           user["address"][key] = updateData[key];
         } else {
-          if(key != 'avatar')
-           user[key] = updateData[key];
+          if (key != "avatar") user[key] = updateData[key];
         }
     });
-    console.log("file---", req.file)
+
     if (req.file) {
       user.avatar = await uploadAndGetAvatarUrl(
         req.file,
@@ -188,7 +190,7 @@ class UserController {
     );
     res.status(201).json({
       status: "success",
-      message: "User deleted successfully",
+      message: `User ${deleteStatus ? "deleted" : "undo"} successfully`,
       data: { user },
     });
   });

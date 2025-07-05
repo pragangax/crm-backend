@@ -1,10 +1,10 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import clientMasterRouter from "../routes/client/clientMasterRoute.js";
 import connectDb from "../connectDb.js";
 import { error } from "../middlewares/error.middleware.js";
 import cors from "cors";
+import clientMasterRouter from "../routes/client/clientMasterRoute.js";
 import contactMasterRouter from "../routes/contact/contactMasterRoute.js";
 import tenderMasterRouter from "../routes/tender/tenderMasterRoute.js";
 import registrationMasterRouter from "../routes/registration/registrationMasterRouter.js";
@@ -29,7 +29,7 @@ const app = express();
 const corsOptions = {
   origin: [
     "http://localhost:3000",
-    "https://crm-frontend-silk-eight.vercel.app"
+    "https://crm-frontend-silk-eight.vercel.app",
   ],
   // origin: "*",
   methods: ["POST", "GET", "PUT", "DELETE"],
@@ -50,8 +50,6 @@ connectDb(DB_URL);
 // app.use("/contact", contactMasterRouter);
 // app.use("/tender", tenderMasterRouter);
 // app.use("/registration", registrationMasterRouter);
-
-
 
 app.get("/", homePage);
 app.use("/target", targetRouter);

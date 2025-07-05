@@ -34,8 +34,8 @@ userRouter.post(
 userRouter.put(
   "/:id",
   uploadSteam.single("avatar"),
-  // (req, res, next) =>
-  //   checkPermissions(entity, actionTypes.UPDATE, req.params.id)(req, res, next),
+  (req, res, next) =>
+    checkPermissions(entity, actionTypes.UPDATE, req.params.id)(req, res, next),
   UserController.updateUser
 );
 userRouter.delete(

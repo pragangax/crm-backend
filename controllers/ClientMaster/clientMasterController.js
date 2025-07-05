@@ -58,7 +58,7 @@ class ClientMasterController {
       detailsConfirmation,
       createdAt,
     } = updateData;
-     
+
     console.log("Listed company : ", listedCompany);
     // Validate required fields
     if (
@@ -112,7 +112,7 @@ class ClientMasterController {
     });
 
     // Ensure relatedContacts is an array and not empty
-    await parseContacts(relatedContacts, newClient);
+    parseContacts(relatedContacts, newClient);
 
     // handles avatar changes in client
     if (req.file) {
@@ -226,7 +226,8 @@ class ClientMasterController {
 
     // Updating directly updatable fields
     Object.keys(updateData).forEach((key) => {
-      if (key != "relatedContacts") client[key] = updateData[key];
+      if (key != "relatedContacts" && key != "avatar")
+        client[key] = updateData[key];
     });
 
     // Parsing Related contacts
@@ -291,7 +292,7 @@ class ClientMasterController {
     const { id } = req.params;
     let { confirm } = req.query;
     confirm = confirm == "true";
-    confirm = false; // have to delete this line in production
+    // confirm = false;
     const client = await ClientMasterModel.findById(id)
       .populate(
         "territory industry subIndustry incorporationType classification relationshipStatus"
